@@ -1,3 +1,27 @@
+# ddSlick
+
+Customized by Slimdev
+
+Events implemented
+
+``
+onClick
+onChange
+onOpen
+onClose
+onDestroy
+onInit
+``
+
+Propertys implementeds
+
+``
+imageMaxWidth
+imageMarginRight
+
+``
+
+
 ddSlick
 Author: Prashant Chaudhary (http://designwithpc.com)
 Plugin Demo & Documentation: http://designwithpc.com/Plugins/ddSlick

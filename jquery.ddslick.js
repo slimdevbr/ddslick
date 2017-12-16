@@ -1,8 +1,14 @@
-﻿//Title: Custom DropDown plugin by PC
+﻿
+//Title: Custom DropDown plugin by PC
 //Documentation: http://designwithpc.com/Plugins/ddslick
 //Author: PC 
 //Website: http://designwithpc.com
 //Twitter: http://twitter.com/chaudharyp
+
+/**
+ * ddslick customed by slimdev
+ * implements events and css propertys
+ */
 
 (function ($) {
 
@@ -31,8 +37,15 @@
         imagePosition: "left",
         showSelectedHTML: true,
         clickOffToClose: true,
-		embedCSS: true,
-        onSelected: function () { }
+        embedCSS: true,
+        imageMaxWidth: '64px',
+        onSelected: function () { },
+        onClick: function () { },
+        onChange: function () { },
+        onOpen: function () { },
+        onClose: function () { },
+        onDestroy: function () { },
+        onInit: function () { }
     },
 
     ddSelectHtml = '<div class="dd-select"><input class="dd-selected-value" type="hidden" /><a class="dd-selected"></a><span class="dd-pointer dd-pointer-down"></span></div>',
@@ -63,9 +76,9 @@
         var options = $.extend({}, defaults, userOptions);
         
         //CSS styles are only added once.
-	    if ($('#css-ddslick').length <= 0 && options.embedCSS) {
-	        $(ddslickCSS).appendTo('head');
-	    }
+        if ($('#css-ddslick').length <= 0 && options.embedCSS) {
+            $(ddslickCSS).appendTo('head');
+        }
 
         //Apply on all selected elements
         return this.each(function () {
@@ -98,7 +111,7 @@
                 else options.data = $.merge(ddSelect, options.data);
 
                 //Replace HTML select with empty placeholder, keep the original
-                var original = obj, placeholder = $('<div').attr('id', obj.attr('id') + '-dd-placeholder');
+                var original = obj, placeholder = $('<div>').attr('id', obj.attr('id') + '-dd-placeholder');
                 obj.replaceWith(placeholder);
                 obj = placeholder;
 
@@ -154,7 +167,9 @@
                     var index = (options.defaultSelectedIndex != null && options.defaultSelectedIndex >= 0 && options.defaultSelectedIndex < options.data.length)
                                 ? options.defaultSelectedIndex
                                 : 0;
-                    selectIndex(obj, index);
+                                alert('aqui');
+                    selectIndex(obj, index, true);
+                    
                 }
 
                 //EVENTS
@@ -165,7 +180,7 @@
 
                 //Selecting an option
                 obj.find('.dd-option').on('click.ddslick', function () {
-                    selectIndex(obj, $(this).closest('li').index());
+                    selectIndex(obj, $(this).closest('li').index(), false);
                 });
 
                 //Click anywhere to close
@@ -178,14 +193,19 @@
                     });
                 }
             }
-        });
+
+            //Callback function on selection
+            if (typeof pluginData.settings.onInit == 'function') {
+                pluginData.settings.onInit.call(this, pluginData);
+            }
+        });     
     };
 
     //Public method to select an option by its index
     methods.select = function (options) {
         return this.each(function () {
             if (options.index!==undefined)
-                selectIndex($(this), options.index);
+                selectIndex($(this), options.index, false);
             if (options.id)
                 selectId($(this), options.id);
         });
@@ -200,6 +220,11 @@
             //Check if plugin is initialized
             if (pluginData)
                 open($this);
+
+            //Callback function on open
+            if (typeof pluginData.settings.onOpen == 'function') {
+                pluginData.settings.onOpen.call(this, pluginData);
+            }
         });
     };
 
@@ -212,6 +237,11 @@
             //Check if plugin is initialized
             if (pluginData)
                 close($this);
+
+            //Callback function on close
+            if (typeof pluginData.settings.onClose == 'function') {
+                pluginData.settings.onClose.call(this, pluginData);
+            }
         });
     };
 
@@ -226,20 +256,22 @@
                 var originalElement = pluginData.original;
                 $this.removeData('ddslick').unbind('.ddslick').replaceWith(originalElement);
             }
+
+            //Callback function on close
+            if (typeof pluginData.settings.onDestroy == 'function') {
+                pluginData.settings.onDestroy.call(this, pluginData);
+            }
         });
     }
     
      //Private: Select id
     function selectId(obj, id) {
-    
        var index = obj.find(".dd-option-value[value= '" + id + "']").parents("li").prevAll().length;
-       selectIndex(obj, index);
-       
+       selectIndex(obj, index, false);
     }
 
     //Private: Select index
-    function selectIndex(obj, index) {
-
+    function selectIndex(obj, index, fromInit) {
         //Get plugin data
         var pluginData = obj.data('ddslick');
 
@@ -256,6 +288,8 @@
         //Highlight selected option
         obj.find('.dd-option').removeClass('dd-option-selected');
         selectedOption.addClass('dd-option-selected');
+
+        var wasChanged = (pluginData.selectedIndex == index) ? false : true;
 
         //Update or Set plugin data with new selection
         pluginData.selectedIndex = index;
@@ -291,11 +325,24 @@
         if (typeof settings.onSelected == 'function') {
             settings.onSelected.call(this, pluginData);
         }
+
+        //Callback function on selection
+        if (typeof settings.onClick == 'function') {
+            if (typeof fromInit === 'undefined') {
+                settings.onClick.call(this, pluginData);
+            }
+        }
+
+        //Callback function on change
+        if (typeof settings.onChange == 'function') {
+            if (fromInit == false && wasChanged) {
+                settings.onChange.call(this, pluginData);
+            }
+        }
     }
 
     //Private: Close the drop down options
     function open(obj) {
-
         var $this = obj.find('.dd-select'),
             ddOptions = $this.siblings('.dd-options'),
             ddPointer = $this.find('.dd-pointer'),
@@ -331,7 +378,6 @@
 
     //Private: Adjust appearence for selected option (move title to middle), when no desripction
     function adjustSelectedHeight(obj) {
-
         //Get height of dd-selected
         var lSHeight = obj.find('.dd-select').css('height');
 
