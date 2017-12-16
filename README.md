@@ -4,22 +4,21 @@ Customized by Slimdev
 
 Events implemented
 
-``
+```
 onClick
 onChange
 onOpen
 onClose
 onDestroy
 onInit
-``
+```
 
 Propertys implementeds
 
-``
+```
 imageMaxWidth
 imageMarginRight
-
-``
+```
 
 
 ddSlick
